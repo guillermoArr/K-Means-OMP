@@ -84,7 +84,7 @@ void save_speedup_results(int data_size, int num_threads, double serial_time, do
     Euclidean distance
 */
 double euclideanDistance(double* a, double* b) {
-    return sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
+    return sqrt(pow(a[0] - b[0], 2) + pow(a[1] - b[1], 2));
 }
 /* 
     K_MEANS 
@@ -199,12 +199,12 @@ double euclideanDistance(double* a, double* b) {
 
  void kmeans_paralelo(double** data, int numPoints, int k, int maxIterations, string output_file) {
     double** centroids = new double*[k];
-    #pragma omp parallel for
     for (int i = 0; i < k; i++) {
         centroids[i] = new double[2];
     }
     int* clusterAssignment = new int[numPoints];
-    
+
+    // Randomly initialize centroids
     srand(time(0));
     for (int i = 0; i < k; i++) {
         int randIndex = rand() % numPoints;
@@ -218,7 +218,9 @@ double euclideanDistance(double* a, double* b) {
         changed = false;
         iter++;
 
-        #pragma omp parallel for schedule(static)
+        // Parallel cluster assignment
+        bool localChanged = false;
+        #pragma omp parallel for schedule(static) reduction(||:localChanged)
         for (int i = 0; i < numPoints; i++) {
             double minDist = euclideanDistance(data[i], centroids[0]);
             int bestCluster = 0;
@@ -231,60 +233,80 @@ double euclideanDistance(double* a, double* b) {
             }
             if (clusterAssignment[i] != bestCluster) {
                 clusterAssignment[i] = bestCluster;
-                changed = true;
+                localChanged = true;
             }
         }
+        changed = localChanged;
 
         if (!changed) break;
 
+        // Initialize arrays
+        double** threadCentroids;
         int* clusterSizes = new int[k]();
-        double** newCentroids = new double*[k];
-        for (int i = 0; i < k; i++) {
-            newCentroids[i] = new double[2]{0.0, 0.0};
-        }
 
-        #pragma omp parallel for schedule(static)
-        for (int i = 0; i < numPoints; i++) {
-            int cluster = clusterAssignment[i];
-            #pragma omp atomic
-            clusterSizes[cluster]++;
-            
+        #pragma omp parallel
+        {
+            int numThreads = omp_get_num_threads();
+            int threadID = omp_get_thread_num();
+
+            // Private copy for each thread
+            double** localCentroids = new double*[k];
+            for (int i = 0; i < k; i++) {
+                localCentroids[i] = new double[2]{0.0, 0.0};
+            }
+
+            #pragma omp for schedule(static)
+            for (int i = 0; i < numPoints; i++) {
+                int cluster = clusterAssignment[i];
+                #pragma omp atomic
+                clusterSizes[cluster]++;
+
+                localCentroids[cluster][0] += data[i][0];
+                localCentroids[cluster][1] += data[i][1];
+            }
+
+            // Merge local centroids into global
             #pragma omp critical
             {
-                newCentroids[cluster][0] += data[i][0];
-                newCentroids[cluster][1] += data[i][1];
+                for (int i = 0; i < k; i++) {
+                    centroids[i][0] += localCentroids[i][0];
+                    centroids[i][1] += localCentroids[i][1];
+                }
             }
+
+            // Clean up local arrays
+            for (int i = 0; i < k; i++) {
+                delete[] localCentroids[i];
+            }
+            delete[] localCentroids;
         }
 
-        #pragma omp parallel for schedule(static)
-        for (int i = 0; i < k; i++) {
-            if (clusterSizes[i] > 0) {
-                centroids[i][0] = newCentroids[i][0] / clusterSizes[i];
-                centroids[i][1] = newCentroids[i][1] / clusterSizes[i];
-            }
-        }
-
+        // Normalize centroids
         #pragma omp parallel for
         for (int i = 0; i < k; i++) {
-            delete[] newCentroids[i];
+            if (clusterSizes[i] > 0) {
+                centroids[i][0] /= clusterSizes[i];
+                centroids[i][1] /= clusterSizes[i];
+            }
         }
-        delete[] newCentroids;
+
         delete[] clusterSizes;
     }
 
+    // Write results
     ofstream out(output_file);
     for (int i = 0; i < numPoints; i++) {
         out << data[i][0] << "," << data[i][1] << "," << clusterAssignment[i] << "\n";
     }
     out.close();
 
+    // Cleanup
     for (int i = 0; i < k; i++) {
         delete[] centroids[i];
     }
     delete[] centroids;
     delete[] clusterAssignment;
 }
-
 
 
  int main(int argc, char** argv) {
