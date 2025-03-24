@@ -1,0 +1,126 @@
+Ejecutando kmeans serial para data/100000_data.csv de tamanio 100000 buscando 5 clusters
+Tiempo de ejecucion promedio en serial: 0.4358 segundos.
+
+Running with 1 threads:
+Tiempo de ejecucion promedio paralelo con 1 threads: 0.4477 segundos
+Speedup: 0.97342x
+
+Running with 4 threads:
+Tiempo de ejecucion promedio paralelo con 4 threads: 0.4072 segundos
+Speedup: 1.07024x
+
+Running with 8 threads:
+Tiempo de ejecucion promedio paralelo con 8 threads: 0.4619 segundos
+Speedup: 0.943494x
+
+Running with 16 threads:
+Tiempo de ejecucion promedio paralelo con 16 threads: 0.5131 segundos
+Speedup: 0.849347x
+Ejecutando kmeans serial para data/200000_data.csv de tamanio 200000 buscando 5 clusters
+Tiempo de ejecucion promedio en serial: 0.8569 segundos.
+
+Running with 1 threads:
+Tiempo de ejecucion promedio paralelo con 1 threads: 0.9356 segundos
+Speedup: 0.915883x
+
+Running with 4 threads:
+Tiempo de ejecucion promedio paralelo con 4 threads: 0.8618 segundos
+Speedup: 0.994314x
+
+Running with 8 threads:
+Tiempo de ejecucion promedio paralelo con 8 threads: 0.9757 segundos
+Speedup: 0.878241x
+
+Running with 16 threads:
+Tiempo de ejecucion promedio paralelo con 16 threads: 1.007 segundos
+Speedup: 0.850943x
+Ejecutando kmeans serial para data/300000_data.csv de tamanio 300000 buscando 5 clusters
+Tiempo de ejecucion promedio en serial: 1.2259 segundos.
+
+Running with 1 threads:
+Tiempo de ejecucion promedio paralelo con 1 threads: 1.1843 segundos
+Speedup: 1.03513x
+
+Running with 4 threads:
+Tiempo de ejecucion promedio paralelo con 4 threads: 1.3122 segundos
+Speedup: 0.934233x
+
+Running with 8 threads:
+Tiempo de ejecucion promedio paralelo con 8 threads: 1.4558 segundos
+Speedup: 0.84208x
+
+Running with 16 threads:
+Tiempo de ejecucion promedio paralelo con 16 threads: 1.4046 segundos
+Speedup: 0.872775x
+Ejecutando kmeans serial para data/400000_data.csv de tamanio 400000 buscando 5 clusters
+Tiempo de ejecucion promedio en serial: 1.8597 segundos.
+
+Running with 1 threads:
+Tiempo de ejecucion promedio paralelo con 1 threads: 1.7639 segundos
+Speedup: 1.05431x
+
+Running with 4 threads:
+Tiempo de ejecucion promedio paralelo con 4 threads: 1.5708 segundos
+Speedup: 1.18392x
+
+Running with 8 threads:
+Tiempo de ejecucion promedio paralelo con 8 threads: 1.8202 segundos
+Speedup: 1.0217x
+
+Running with 16 threads:
+Tiempo de ejecucion promedio paralelo con 16 threads: 1.6465 segundos
+Speedup: 1.12949x
+Ejecutando kmeans serial para data/600000_data.csv de tamanio 600000 buscando 5 clusters
+Tiempo de ejecucion promedio en serial: 2.9121 segundos.
+
+Running with 1 threads:
+Tiempo de ejecucion promedio paralelo con 1 threads: 3.4404 segundos
+Speedup: 0.846442x
+
+Running with 4 threads:
+Tiempo de ejecucion promedio paralelo con 4 threads: 2.6512 segundos
+Speedup: 1.09841x
+
+Running with 8 threads:
+Tiempo de ejecucion promedio paralelo con 8 threads: 2.595 segundos
+Speedup: 1.1222x
+
+Running with 16 threads:
+Tiempo de ejecucion promedio paralelo con 16 threads: 2.8442 segundos
+Speedup: 1.02387x
+Ejecutando kmeans serial para data/800000_data.csv de tamanio 800000 buscando 5 clusters
+Tiempo de ejecucion promedio en serial: 3.288 segundos.
+
+Running with 1 threads:
+Tiempo de ejecucion promedio paralelo con 1 threads: 3.7097 segundos
+Speedup: 0.886325x
+
+Running with 4 threads:
+Tiempo de ejecucion promedio paralelo con 4 threads: 3.0693 segundos
+Speedup: 1.07125x
+
+Running with 8 threads:
+Tiempo de ejecucion promedio paralelo con 8 threads: 3.821 segundos
+Speedup: 0.860508x
+
+Running with 16 threads:
+Tiempo de ejecucion promedio paralelo con 16 threads: 3.9958 segundos
+Speedup: 0.822864x
+Ejecutando kmeans serial para data/1000000_data.csv de tamanio 1000000 buscando 5 clusters
+Tiempo de ejecucion promedio en serial: 3.9688 segundos.
+
+Running with 1 threads:
+Tiempo de ejecucion promedio paralelo con 1 threads: 4.5487 segundos
+Speedup: 0.872513x
+
+Running with 4 threads:
+Tiempo de ejecucion promedio paralelo con 4 threads: 4.0563 segundos
+Speedup: 0.978429x
+
+Running with 8 threads:
+Tiempo de ejecucion promedio paralelo con 8 threads: 4.7684 segundos
+Speedup: 0.832313x
+
+Running with 16 threads:
+Tiempo de ejecucion promedio paralelo con 16 threads: 3.8175 segundos
+Speedup: 1.03963x

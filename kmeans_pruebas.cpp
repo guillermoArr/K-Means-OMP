@@ -278,7 +278,7 @@ double euclideanDistance(double* a, double* b) {
     // Experiment design
     int max_threads = omp_get_max_threads();
     int num_threads[4] = {1, max_threads/2, max_threads, max_threads*2};
-    int num_points[7] = {100000, 200000, 300000, 400000}; //, 600000, 800000, 1000000
+    int num_points[7] = {100000, 200000, 300000, 400000, 600000, 800000, 1000000};
     double start, serial_time, parallel_time;
 
     // Converting the first command-line argument (argv[1]) into an integer for maximum number of iterations
