@@ -339,7 +339,7 @@ double euclideanDistance(double* a, double* b) {
             parallel_time = total_parallel_time / 10.0;
             
             cout << "Tiempo de ejecucion promedio paralelo con " << threads << " threads: " << parallel_time << " segundos" << endl;
-            cout << "Speedup: " << serial_time / parallel_time << "x" << endl;
+            cout << "Speedup: " << serial_time / parallel_time << "x\n";
         }
 
         // Clean up dynamically allocated memory
