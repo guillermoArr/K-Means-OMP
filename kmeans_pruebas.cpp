@@ -67,6 +67,19 @@ int save_to_CSV(string file_name, double** points, long long int size) {
     return 0;
 }
 
+// Function to append speedup results to a CSV file
+void save_speedup_results(int data_size, int num_threads, double serial_time, double parallel_time) {
+    ofstream out("output/speedups.csv", ios::app); // Open file in append mode
+    if (!out.is_open()) {
+        cerr << "Error: Could not open speedup_results.csv\n";
+        return;
+    }
+
+    double speedup = serial_time / parallel_time;
+    out << data_size << "," << num_threads << "," << serial_time << "," << parallel_time << "," << speedup << "\n";
+    out.close();
+}
+
 /*
     Euclidean distance
 */
@@ -275,6 +288,15 @@ double euclideanDistance(double* a, double* b) {
 
 
  int main(int argc, char** argv) {
+    // Create/Overwrite the CSV file and write headers
+    ofstream out("output/speedups.csv");
+    if (!out.is_open()) {
+        cerr << "Error: Could not create speedup_results.csv\n";
+        return 1;
+    }
+    out << "DataSize,NumThreads,SerialTime,ParallelTime,Speedup\n"; // Column headers
+    out.close();
+
     // Experiment design
     int max_threads = omp_get_max_threads();
     int num_threads[4] = {1, max_threads/2, max_threads, max_threads*2};
@@ -340,6 +362,9 @@ double euclideanDistance(double* a, double* b) {
             
             cout << "Tiempo de ejecucion promedio paralelo con " << threads << " threads: " << parallel_time << " segundos" << endl;
             cout << "Speedup: " << serial_time / parallel_time << "x\n";
+
+            // Save speedup results to CSV
+            save_speedup_results(data_size, threads, serial_time, parallel_time);
         }
 
         // Clean up dynamically allocated memory
