@@ -1,0 +1,5 @@
+# Ignore CSV files with "result" in the filename
+*result*.csv
+
+# Ignore all .exe files
+*.exe
