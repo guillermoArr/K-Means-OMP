@@ -123,7 +123,7 @@ void kmeans(double** data, int numPoints, int k, int maxIterations, string outpu
 int main() {
     int numPoints = 400000;
     int k = 5;
-    int maxIterations = 100000;
+    int maxIterations = 5000;
     double start, parallel_time;
     int num_threads = 4;
     
