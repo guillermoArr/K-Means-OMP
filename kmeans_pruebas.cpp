@@ -339,6 +339,7 @@ double euclideanDistance(double* a, double* b) {
 
         // Report Execution Time for Serial
         cout << "Tiempo de ejecucion promedio en serial: " << serial_time << " segundos.\n";
+        save_speedup_results(data_size, 0, serial_time, serial_time);
 
         string output_parallel = "output/" + to_string(data_size) + "_results_parallel_";
 
