@@ -100,8 +100,6 @@ double euclideanDistance(double* a, double* b) {
         centroids[i] = new double[2];
     }
 
-    
-    srand(time(0));
     for (int i = 0; i < k; i++) {
         int randIndex = rand() % numPoints;
         centroids[i][0] = data[randIndex][0];
@@ -192,12 +190,12 @@ double euclideanDistance(double* a, double* b) {
         centroids[i] = new double[2];
     }
     
-    srand(time(0));
     for (int i = 0; i < k; i++) {
         int randIndex = rand() % numPoints;
         centroids[i][0] = data[randIndex][0];
         centroids[i][1] = data[randIndex][1];
     }
+    
     // Pre-allocate memory for cluster updates
     int* clusterSizes = new int[k];
     double** newCentroids = new double*[k];
@@ -273,6 +271,10 @@ double euclideanDistance(double* a, double* b) {
 }
 
  int main(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "Usage: " << argv[0] << " <max_iterations> <num_clusters> <seed>\n";
+        return 1;
+    }
     // Create/Overwrite the CSV file and write headers
     ofstream out("output/speedups.csv");
     if (!out.is_open()) {
@@ -294,6 +296,11 @@ double euclideanDistance(double* a, double* b) {
     // Converting the second command-line argument (argv[2]) into an integer that represents the number of clusters (num_clusters) to be used in the K-means algorithm
     const int num_clusters = atoi(argv[2]);
     
+    // User provided seed 
+    const int seed = atoi(argv[3]);  
+
+    // Set the seed for reproducibility
+    srand(seed);
     
     for (int data_size : num_points){
         string input = "data/" + to_string(data_size) + "_data.csv";
