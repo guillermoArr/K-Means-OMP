@@ -274,7 +274,7 @@ double euclideanDistance(double* a, double* b) {
         }
         
         // update centroids
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for (int i = 0; i < k; i++) {
             if (clusterSizes[i] > 0) {
                 centroids[i][0] = newCentroids[i][0] / clusterSizes[i];
