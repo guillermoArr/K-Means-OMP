@@ -8,13 +8,13 @@ ITAM, Cómputo Paralelo bajo tutela del Profesor Octavio Gutiérrez
 
 
 ### Introducción 
-En este proyecto se implementó un código del algortimo de K-means que recibiera un conjunto de datos en dos dimensiones a partir de un archivo de *csv*. Los datos fuente se pueden encontrar dentro de la carpeta [data](https://github.com/guillermoArr/K-Means-OMP/tree/main/data), donde cada uno de  los archivos se genera al ejecutar las primeras dos celdas del notebook [synthetic_clusters](https://github.com/guillermoArr/K-Means-OMP/blob/main/synthetic_clusters.ipynb). A partir de estos datos, las funciones desarrolladas dentro de **kmeans_parallel.cpp**, **kmeans_serial.cpp** y **kmeans_pruebas.cpp** generaran un nuevo archivo *csv* con los datos y la correspondiente asignación de cluster resultado del algoritmo kmeans implementado. Los resultados se almacenan dentro de la carpeta **output**, pero se omiten con .gitignore para evitar una sobre carga de archivos. 
+En este proyecto se implementó un código del algortimo de K-means que recibiera un conjunto de datos en dos dimensiones a partir de un archivo de *csv*. Los datos fuente se pueden encontrar dentro de la carpeta [data](https://github.com/guillermoArr/K-Means-OMP/tree/main/data), donde cada uno de  los archivos se genera al ejecutar las primeras dos celdas del notebook [synthetic_clusters](https://github.com/guillermoArr/K-Means-OMP/blob/main/synthetic_clusters.ipynb). A partir de estos datos, las funciones desarrolladas dentro de **kmeans_parallel.cpp**, **kmeans_serial.cpp**, **kmeans_pruebas.cpp** y **kmeans_pruebas copy.cpp** generaran un nuevo archivo *csv* con los datos y la correspondiente asignación de cluster resultado del algoritmo kmeans implementado. Los resultados se almacenan dentro de la carpeta **output**, pero se omiten con .gitignore para evitar una sobre carga de archivos. 
 
 #### Descripción de archivos:
 - synthetic_clusters.ipynb: notebook aportado por el profesor Octavio para generación de datos de prueba para el algoritmo de kmeans. Se realizaron algunas modificaciones para poder mostrar los resultados tanto del algoritmo serial como del paralelo.
 - kmeans_serial.cpp: implementación serial de K-means utilizada como referencia para la implementación paralela. El main provee una forma rápida de probar los resultados del algoritmo.
 - kmeans_parallel.cpp: implementación paralela de K-means utilizando la librería OMP. El main provee una forma rápida de probar los resultados del algoritmo.
-- kmeans_pruebas.cpp: archivo de experimento para comparación de implementaciones. Dentro del main se ejecuta el experimento descrito en la siguiente sección.
+- kmeans_pruebas.cpp y kmeans_pruebas copy.cpp: archivo de experimento para comparación de implementaciones. Dentro del main se ejecuta el experimento descrito en la siguiente sección.
 - speedups_graph.ipynb: notebook diseñado para generar las gráficas de speedup que se muestran en este reporte.
 
 ### Descripción de experimento
@@ -94,7 +94,67 @@ El experimento se ejecuta con una Laptop en la que nos aseguramos de tener enchu
         - g++.exe (Rev2, Built by MSYS2 project) 14.2.0. Copyright (C) 2024 Free Software Foundation, Inc.
 
 ### Resultados
-Después de ejecutar 
+A continuación se presentan los resultados para dos versiones de paralelización: la establecida dentro del código kmeans_pruebas.cpp (versión final 1) y la establecida dentro del código kmeans_prueba copy.cpp (versión final 2). 
+
+La diferencia entre ambas implementaciones radica en la definición de la región crítica como se muestra a continuación:
+
+**Versión 1:**
+```C++
+#pragma omp parallel for schedule(static)
+for (int i = 0; i < numPoints; i++) {
+    int cluster = clusterAssignment[i];
+    #pragma omp atomic
+    clusterSizes[cluster]++;
+    
+    #pragma omp critical
+    {
+        newCentroids[cluster][0] += data[i][0];
+        newCentroids[cluster][1] += data[i][1];
+    }
+}
+```
+
+**Versión 2:**
+```C++
+#pragma omp parallel
+{
+    // Thread-local accumulators
+    int* localSizes = new int[k]();
+    double** localSums = new double*[k];
+    for (int i = 0; i < k; i++) {
+        localSums[i] = new double[2]{0.0, 0.0};
+    }
+
+    // Accumulate local sums
+    #pragma omp for schedule(dynamic, 1000)
+    for (int i = 0; i < numPoints; i++) {
+        int cluster = clusterAssignment[i];
+        localSizes[cluster]++;
+        localSums[cluster][0] += data[i][0];
+        localSums[cluster][1] += data[i][1];
+    }
+
+    // Combine results
+    #pragma omp critical
+    {
+        for (int i = 0; i < k; i++) {
+            clusterSizes[i] += localSizes[i];
+            newCentroids[i][0] += localSums[i][0];
+            newCentroids[i][1] += localSums[i][1];
+        }
+    }
+
+    // Clean up thread-local memory
+    for (int i = 0; i < k; i++) {
+        delete[] localSums[i];
+    }
+    delete[] localSums;
+    delete[] localSizes;
+}
+```
+
+
+#### Versión 1
 **Tiempo de ejecución por número de hilos**
 <table>
   <tr>
@@ -109,6 +169,8 @@ Después de ejecutar
     <td align="center"><img src="images/execution_time_16_threads.png" alt="Tiempos con 16 hilos" width="400"></td>
   </tr>
 </table>
+
+Como podemos observar en las gráficas anteriores, el comportamiento conforme aumenta el tamaño de los datos es el esperado: el tiempo de ejecución aumenta de forma casi proporcional al aumento de tamaño. Pero podemos observar distintos comportamientos. Es curioso observar los dos mínimos locales que se presentan dentro de la versión paralela para 4 y 8 hilos, así como la curvatura de máximo local que se observa para la versión paralela con un hilo. Esto último coincide con lo esperado, dado que para un número alto de puntos se esperaría que una versión paralela con un punto funcione incluso peor que la versión serial. 
 
 **Tabla 1. Tiempo de ejecución y speedups**
 | No puntos | Hilos    | Serial (s) | OpenMP (s)   | Speedup  |
@@ -152,11 +214,76 @@ Nota: Resultado obtenidos con código de kmeans_pruebas.cpp
 
 ![Speedups](images/speedups.png)
 
+En cuanto a los *speedups* notamos comportamientos muy diversos de acuerdo al tamaño de los datos. Por un lado, vemos que el máximo speedup se obtiene para 200,000 datos y con 4 hilos. Asimismo, observamos que, a excepción de para 100,000 y 600,000 datos, se sigue un comportamiento ascendente conforme aumenta el número de hilos y una caída al exceder el número máximo de hilos disponibles (16 hilos). Este resultado también es el esperado debido al *overhead* generado por generar más hilos.
+
+#### Versión 2
+**Tiempo de ejecución por número de hilos**
+<table>
+  <tr>
+    <td align="center"><img src="images/execution_time_0_threads2.png" alt="Tiempos de versión serial" width="400"></td>
+    <td align="center"><img src="images/execution_time_1_threads2.png" alt="Tiempos con 1 hilo" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="images/execution_time_4_threads2.png" alt="Tiempos con 4 hilos" width="400"></td>
+    <td align="center"><img src="images/execution_time_8_threads2.png" alt="Tiempos con 8 hilos" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="images/execution_time_16_threads2.png" alt="Tiempos con 16 hilos" width="400"></td>
+  </tr>
+</table>
+
+Para la versión 2 observamos un comportamiento muy similar al de la versión 1, por lo que nos enfocaremos en destacar las magnitudes del eje vertical. Nótese que la diferencia entre el rango de la versión serial respecto a las paralelas es mucho mayor. Entre las paralelas, el mejor resultado (de acuerdo al rango) se identifica con 8 hilos. Análogamente a la versión 1, notamos que para 16 hilos, el rango vuelve a aumentar a causa del overhead.
+
+
+**Tabla 2. Tiempo de ejecución y speedups**
+| No puntos | Hilos    | Serial (s) | OpenMP (s)   | Speedup |
+|----------|-----------|------------|--------------|---------|
+| 100000   | 0         | 0.3295     | 0.3295       | NA      |
+| 100000   | 1         | 0.3295     | 0.4053       | 0.8130  |
+| 100000   | 4         | 0.3295     | 0.2136       | 1.5426  |
+| 100000   | 8         | 0.3295     | 0.1719       | 1.9168  |
+| 100000   | 16        | 0.3295     | 0.1405       | 2.3452  |
+| 200000   | 0         | 0.8039     | 0.8039       | NA      |
+| 200000   | 1         | 0.8039     | 0.8234       | 0.9763  |
+| 200000   | 4         | 0.8039     | 0.3530       | 2.2773  |
+| 200000   | 8         | 0.8039     | 0.2410       | 3.3357  |
+| 200000   | 16        | 0.8039     | 0.2643       | 3.0416  |
+| 300000   | 0         | 1.2921     | 1.2921       | NA      |
+| 300000   | 1         | 1.2921     | 1.4503       | 0.8909  |
+| 300000   | 4         | 1.2921     | 0.7316       | 1.7661  |
+| 300000   | 8         | 1.2921     | 0.4249       | 3.0409  |
+| 300000   | 16        | 1.2921     | 0.4508       | 2.8662  |
+| 400000   | 0         | 1.4996     | 1.4996       | NA      |
+| 400000   | 1         | 1.4996     | 1.7075       | 0.8782  |
+| 400000   | 4         | 1.4996     | 0.7063       | 2.1232  |
+| 400000   | 8         | 1.4996     | 0.5943       | 2.5233  |
+| 400000   | 16        | 1.4996     | 0.6423       | 2.3347  |
+| 600000   | 0         | 2.1675     | 2.1675       | NA      |
+| 600000   | 1         | 2.1675     | 3.0689       | 0.7063  |
+| 600000   | 4         | 2.1675     | 1.3075       | 1.6577  |
+| 600000   | 8         | 2.1675     | 0.9306       | 2.3291  |
+| 600000   | 16        | 2.1675     | 0.7294       | 2.9716  |
+| 800000   | 0         | 2.6518     | 2.6518       | NA      |
+| 800000   | 1         | 2.6518     | 3.4852       | 0.7609  |
+| 800000   | 4         | 2.6518     | 1.2959       | 2.0463  |
+| 800000   | 8         | 2.6518     | 0.9389       | 2.8244  |
+| 800000   | 16        | 2.6518     | 1.2685       | 2.0905  |
+| 1000000  | 0         | 5.3340     | 5.3340       | NA      |
+| 1000000  | 1         | 5.3340     | 3.8186       | 1.3969  |
+| 1000000  | 4         | 5.3340     | 2.1045       | 2.5346  |
+| 1000000  | 8         | 5.3340     | 1.5679       | 3.4020  |
+| 1000000  | 16        | 5.3340     | 1.7624       | 3.0266  |
+Nota: Resultado obtenidos con código de kmeans_pruebas copy.cpp
+
+![Speedups](images/speedups2.png)
+
+Para la versión 2, nos gustaría resaltar la diferencia de la gráfica de *speedups* respecto a la versión 1. Ya que el comportamiento de los *speedups* de la versión 2 es mucho más consistente que los obtenidos en la versión 1. En este caso cabe destacar el comportamiento curvo para varios tamaños de datos lo que coincide con lo esperado por teoría: el *speedup* aumenta conforme aumentan los hilos pero hasta cierto punto, ya que al sobre pasar el número máximo se obtiene una caída en los valores del *speedup*. Por último, cabe destacar que el nuevo *speedup* máximo es para 1,000,000 de datos y con 8 hilos. 
 
 ### Discusión
+La diferencia en los resultados puede explicarse debido al cuello de botella que se genera a partir de una región crítica dentro de un for paralelizado, lo que genera una pérdida de la eficiencia por esperar a la realización de las instrucciones dentro de esas regiones. En cambio, en la versión 2 utilizamos variables locales para obtener y guardar las sumas que después podemos utilizar para realizar las actualizaciones dentro de la región crítica. 
 
 ## Anexo 1
-#### Código
+#### Código del experimento
 
 ``` C++
 int main(int argc, char** argv) {
